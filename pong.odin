@@ -14,8 +14,8 @@ main :: proc() {
   player_size := Vec2{32,128}
 
   ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-  ball_vel:= Vec2{-200,0}
-  ball_size := 32
+  ball_vel:= Vec2{-800,0}
+  ball_size := 10
 
   for !rl.WindowShouldClose() {
 
@@ -48,17 +48,26 @@ main :: proc() {
     if ball_pos.y > f32(SCREEN_HEIGHT) {
       ball_vel = linalg.reflect(ball_vel, Vec2{0,-1})
     } 
-    if ball_pos.y < 0 {
+    if ball_pos.y <= 0 {
       ball_vel = linalg.reflect(ball_vel, Vec2{0,-1})
-    } 
+    }
+    if ball_pos.x >= f32(SCREEN_WIDTH) {
+      ball_vel = linalg.reflect(ball_vel, Vec2{-1,0})
+    }
 
     if rl.CheckCollisionCircleRec(ball_pos, f32(ball_size) , player_rect) {
+      rel_y := ball_pos.y - player_pos.y / (player_size.y / 2)
+      rel_y = clamp(rel_y, -1, 1)
+      angle := rel_y * (linalg.PI / 4)
+      speed := linalg.length(ball_vel)
+      ball_vel = Vec2{speed * linalg.cos(angle), speed * -linalg.sin(angle)}
+
       if ball_pos.y > player_pos.y + player_size.y / 2 {
-      ball_vel = linalg.reflect(ball_vel, Vec2{-1,-1})
+        ball_vel = Vec2{speed * linalg.cos(angle), speed * linalg.sin(angle)}
       }
 
       if ball_pos.y < player_pos.y + player_size.y / 2 {
-      ball_vel = linalg.reflect(ball_vel, Vec2{-1,1})
+        ball_vel = Vec2{speed * linalg.cos(angle), speed * -linalg.sin(angle)}
       }
     }
 
