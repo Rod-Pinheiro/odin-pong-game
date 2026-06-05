@@ -15,7 +15,7 @@ main :: proc() {
   player_speed := f32(800)
 
   ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-  ball_vel:= Vec2{-800,0}
+  ball_vel:= Vec2{0,0}
   ball_size := 10
 
   for !rl.WindowShouldClose() {
@@ -31,6 +31,13 @@ main :: proc() {
       player_vel.y = 0
     }
 
+    if ball_vel == 0 {
+      rl.DrawText("Press S to Start", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
+      if rl.IsKeyDown(.S){
+        ball_vel = {-800, 0}
+      }
+    }
+    
     player_pos += player_vel * rl.GetFrameTime()
     ball_pos += ball_vel * rl.GetFrameTime()
 
