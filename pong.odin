@@ -12,6 +12,7 @@ main :: proc() {
   player_pos := Vec2{ 10, f32(SCREEN_HEIGHT) / 2}
   player_vel: Vec2
   player_size := Vec2{32,128}
+  player_speed := f32(800)
 
   ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
   ball_vel:= Vec2{-800,0}
@@ -23,9 +24,9 @@ main :: proc() {
     rl.ClearBackground(rl.BLACK)
  
     if rl.IsKeyDown(.UP) {
-      player_vel.y = -400
+      player_vel.y = -player_speed
     } else if rl.IsKeyDown(.DOWN){
-      player_vel.y = 400
+      player_vel.y = player_speed
     } else {
       player_vel.y = 0
     }
