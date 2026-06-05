@@ -71,6 +71,17 @@ main :: proc() {
       ball_vel = Vec2{speed * linalg.cos(angle), speed * math.sin(angle)}
     }
 
+    if ball_pos.x < 0 {
+      rl.DrawText("Game Over", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20, 40, rl.RED)
+      rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
+      if rl.IsKeyDown(.R) {
+        ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
+        ball_vel = Vec2{-800,0}
+        player_pos = Vec2{10, f32(SCREEN_HEIGHT) / 2}
+      }
+    }
+
+    rl.DrawFPS(10, 10);  
     rl.DrawRectangleV(player_pos, player_size, rl.WHITE)
     rl.DrawCircleV(ball_pos, f32(ball_size), rl.WHITE)
     rl.EndDrawing()
