@@ -56,19 +56,11 @@ main :: proc() {
     }
 
     if rl.CheckCollisionCircleRec(ball_pos, f32(ball_size) , player_rect) {
-      rel_y := ball_pos.y - player_pos.y / (player_size.y / 2)
+      rel_y := (ball_pos.y - (player_pos.y + player_size.y / 2)) / (player_size.y / 2)
       rel_y = clamp(rel_y, -1, 1)
       angle := rel_y * (linalg.PI / 4)
       speed := linalg.length(ball_vel)
-      ball_vel = Vec2{speed * linalg.cos(angle), speed * -linalg.sin(angle)}
-
-      if ball_pos.y > player_pos.y + player_size.y / 2 {
-        ball_vel = Vec2{speed * linalg.cos(angle), speed * linalg.sin(angle)}
-      }
-
-      if ball_pos.y < player_pos.y + player_size.y / 2 {
-        ball_vel = Vec2{speed * linalg.cos(angle), speed * -linalg.sin(angle)}
-      }
+      ball_vel = Vec2{speed * linalg.cos(angle), speed * math.sin(angle)}
     }
 
     rl.DrawRectangleV(player_pos, player_size, rl.WHITE)
