@@ -83,79 +83,26 @@ main :: proc() {
     npc.pos += npc.vel * rl.GetFrameTime()
 
     // Arena
-    if player.pos.y > f32(rl.GetScreenHeight()) - 128 {
-    player.pos.y = f32(rl.GetScreenHeight()) - 128
-    }
-    if player.pos.y < 0 {
-    player.pos.y = f32(0)
-    }
-
-    if npc.pos.y > f32(rl.GetScreenHeight()) - 128 {
-    npc.pos.y = f32(rl.GetScreenHeight()) - 128
-    }
-    if npc.pos.y < 0 {
-    npc.pos.y = f32(0)
-    }
-
-    if ball.pos.y + ball.radius >= f32(SCREEN_HEIGHT) {
-      ball.vel = {ball.vel.x, ball.vel.y * -1}
-    } 
-    if ball.pos.y - ball.radius <= 0 {
-      ball.vel = {ball.vel.x, ball.vel.y * -1}
-    }
-    // hitbox fundo DEBUG
-    // if ball.pos.x >= f32(SCREEN_WIDTH) {
-    //   ball.vel = {ball.vel.x * -1, ball.vel.y}
-    // }
-
+    clamp_paddle(&player)
+    clamp_paddle(&npc)
+    clamp_ball(&ball)
 
     //NPC logic
     if ball.vel != 0{
       diff := ball.pos.y - (npc.pos.y + npc.size.y / 2)
-    if abs(diff) > 5 { // deadzone para não tremer
-        npc.vel.y = clamp(diff * 10, -npc.speed, npc.speed) // proporcional + limitado
-    } else {
-      npc.vel.y = 0
-    }
-    }
-    
-    //Hitboxes
-    player_rect := rl.Rectangle {
-      player.pos.x, player.pos.y,
-      player.size.x, player.size.y
-    }
-    npc_rect := rl.Rectangle {
-      npc.pos.x, npc.pos.y,
-      npc.size.x, npc.size.y
-    }
-    
-    if rl.CheckCollisionCircleRec(ball.pos, ball.radius , player_rect) {
-      rel_y := (ball.pos.y - (player.pos.y + player.size.y / 2)) / (player.size.y / 2)
-      rel_y = clamp(rel_y, -1, 1)
-      angle := rel_y * (linalg.PI / 4)
-      speed := linalg.length(ball.vel)
-      ball.speed += 50
-      if ball.radius <= 5 {
-        ball.radius -= 1
+      if abs(diff) > 5 { // deadzone para não tremer
+          npc.vel.y = clamp(diff * 10, -npc.speed, npc.speed) // proporcional + limitado
+      } else {
+        npc.vel.y = 0
       }
-      ball.vel = Vec2{speed * math.cos(angle), speed * math.sin(angle)}
     }
 
-    if rl.CheckCollisionCircleRec(ball.pos, ball.radius , npc_rect) {
-      rel_y := (ball.pos.y - (player.pos.y + player.size.y / 2)) / (player.size.y / 2)
-      rel_y = clamp(rel_y, -1, 1)
-      angle := rel_y * (linalg.PI / 4)
-      speed := linalg.length(ball.vel)
-      ball.speed += 50
-      if ball.radius <= 5 {
-        ball.radius -= 1
-      }
-      ball.vel = Vec2{ball.speed * -math.cos(angle), ball.speed * math.sin(angle)}
-    }
+    check_collision(&player, &ball, 1)
+    check_collision(&npc, &ball, -1)
 
     if ball.pos.x < 0 || ball.pos.x >= f32(SCREEN_WIDTH) {
       finish_game := false
-      
+
       if ball.pos.x > 0 {
         score.player += 1
       } else {
@@ -198,4 +145,30 @@ main :: proc() {
   }
 
   rl.CloseWindow()
+}
+
+clamp_paddle :: proc(p: ^Paddle) {
+  max_y := f32(rl.GetScreenHeight()) - p.size.y
+  if p.pos.y > max_y {p.pos.y = max_y}
+  if p.pos.y < 0 {p.pos.y = 0}
+}
+
+clamp_ball :: proc(b: ^Ball) {
+  max_y := f32(rl.GetScreenHeight()) - b.radius
+  if b.pos.y > max_y {b.vel = {b.vel.x, b.vel.y * -1 }}
+  if b.pos.y < 0 {b.vel = {b.vel.x, b.vel.y * -1}}
+}
+
+check_collision :: proc(p: ^Paddle, b: ^Ball, dir: f32) {
+  rect := rl.Rectangle{p.pos.x, p.pos.y, p.size.x, p.size.y}
+  if rl.CheckCollisionCircleRec(b.pos, b.radius, rect){
+    rel_y := (b.pos.y - (p.pos.y + p.size.y / 2)) / (p.size.y / 2)
+    rel_y = clamp(rel_y, -1, 1)
+    angle := rel_y * (linalg.PI / 4)
+    speed := linalg.length(b.vel * 1.05) // aumenta velocidade da bola em 5% a cada hit
+    if b.radius <= 5 {
+      b.radius -= 1
+    }
+    b.vel = {dir * speed * math.cos(angle), speed * math.sin(angle)}
+  }
 }
