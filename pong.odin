@@ -3,6 +3,7 @@ package game
 import rl "vendor:raylib"
 import "core:math"
 import "core:math/linalg"
+import "core:fmt"
 
 Vec2 :: rl.Vector2
 main :: proc() {
@@ -18,12 +19,14 @@ main :: proc() {
   npc_size := Vec2{32,128}
   npc_pos := Vec2{f32(SCREEN_WIDTH) - (npc_size.x + 10), f32(SCREEN_HEIGHT) / 2}
   npc_vel : Vec2
-  npc_speed := f32(800)
+  npc_speed := f32(400)
 
   ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
   ball_vel:= Vec2{0,0}
   ball_size := 10
   ball_speed := f32(800)
+
+  score : Vec2
 
   for !rl.WindowShouldClose() {
 
@@ -123,9 +126,29 @@ main :: proc() {
     }
 
     if ball_pos.x < 0 || ball_pos.x >= f32(SCREEN_WIDTH) {
-      rl.DrawText("Game Over", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20, 40, rl.RED)
-      rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
-      if rl.IsKeyDown(.R) {
+      finish_game := false
+      
+      if ball_pos.x > 0 {
+        score.x += 1
+      } else {
+        score.y += 1
+      }
+      
+      if score.x >= 11 || score.y >= 11 {
+        finish_game = true
+        rl.DrawText("Game Over", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20, 40, rl.RED)
+        rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
+      }
+      
+      if finish_game == true && rl.IsKeyDown(.R) {
+        score = Vec2 {0,0}
+        ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
+        ball_speed = 800
+        ball_vel = Vec2{-ball_speed,0}
+        player_pos = Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
+        npc_pos = Vec2{npc_pos.x, f32(SCREEN_HEIGHT) / 2}
+      } 
+      if finish_game == false {
         ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
         ball_speed = 800
         ball_vel = Vec2{-ball_speed,0}
@@ -133,6 +156,10 @@ main :: proc() {
         npc_pos = Vec2{npc_pos.x, f32(SCREEN_HEIGHT) / 2}
       }
     }
+
+    score_text := fmt.ctprintf("%d : %d", clamp(i32(score.x), 0 ,11), clamp(i32(score.y), 0 ,11)) // limita os pontos exibidos na tela a 11
+    rl.DrawText("SCORE", SCREEN_WIDTH / 2 - 50 , 20, 30, rl.WHITE)
+    rl.DrawText(score_text, SCREEN_WIDTH / 2 - 30, 60, 30, rl.WHITE)
 
     rl.DrawFPS(10, 10);  
     rl.DrawRectangleV(player_pos, player_size, rl.WHITE)
