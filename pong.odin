@@ -79,13 +79,12 @@ main :: proc() {
 
     //NPC logic
     if ball_vel != 0{
-      if ball_vel.y > 0 {
-        npc_vel.y = npc_speed
-      } else if ball_vel.y < 0 {
-        npc_vel.y = -npc_speed
-      } else {
-        npc_vel.y = 0
-      }
+      diff := ball_pos.y - (npc_pos.y + npc_size.y / 2)
+    if abs(diff) > 5 { // deadzone para não tremer
+        npc_vel.y = clamp(diff * 10, -npc_speed, npc_speed) // proporcional + limitado
+    } else {
+      npc_vel.y = 0
+    }
     }
     
     //Hitboxes
