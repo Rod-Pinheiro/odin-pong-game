@@ -10,19 +10,20 @@ main :: proc() {
   SCREEN_HEIGHT := i32(720)
   rl.SetTargetFPS(60)
   rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pong")
-  player_pos := Vec2{ 10, f32(SCREEN_HEIGHT) / 2}
   player_vel : Vec2
   player_size := Vec2{32,128}
+  player_pos := Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
   player_speed := f32(800)
 
   npc_size := Vec2{32,128}
   npc_pos := Vec2{f32(SCREEN_WIDTH) - (npc_size.x + 10), f32(SCREEN_HEIGHT) / 2}
   npc_vel : Vec2
-  npc_speed := f32(400)
+  npc_speed := f32(800)
 
   ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
   ball_vel:= Vec2{0,0}
   ball_size := 10
+  ball_speed := f32(800)
 
   for !rl.WindowShouldClose() {
 
@@ -41,7 +42,7 @@ main :: proc() {
     if ball_vel == 0 {
       rl.DrawText("Press S to Start", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
       if rl.IsKeyDown(.S){
-        ball_vel = {-800, 0}
+        ball_vel = {-ball_speed, 0}
       }
     }
 
@@ -65,10 +66,10 @@ main :: proc() {
     npc_pos.y = f32(0)
     }
 
-    if ball_pos.y >= f32(SCREEN_HEIGHT) {
+    if ball_pos.y + f32(ball_size) >= f32(SCREEN_HEIGHT) {
       ball_vel = {ball_vel.x, ball_vel.y * -1}
     } 
-    if ball_pos.y <= 0 {
+    if ball_pos.y - f32(ball_size) <= 0 {
       ball_vel = {ball_vel.x, ball_vel.y * -1}
     }
     // hitbox fundo DEBUG
@@ -102,6 +103,10 @@ main :: proc() {
       rel_y = clamp(rel_y, -1, 1)
       angle := rel_y * (linalg.PI / 4)
       speed := linalg.length(ball_vel)
+      ball_speed += 50
+      if ball_size <= 5 {
+        ball_size -= 1
+      }
       ball_vel = Vec2{speed * math.cos(angle), speed * math.sin(angle)}
     }
 
@@ -110,7 +115,11 @@ main :: proc() {
       rel_y = clamp(rel_y, -1, 1)
       angle := rel_y * (linalg.PI / 4)
       speed := linalg.length(ball_vel)
-      ball_vel = Vec2{speed * -math.cos(angle), speed * math.sin(angle)}
+      ball_speed += 50
+      if ball_size <= 5 {
+        ball_size -= 1
+      }
+      ball_vel = Vec2{ball_speed * -math.cos(angle), ball_speed * math.sin(angle)}
     }
 
     if ball_pos.x < 0 || ball_pos.x >= f32(SCREEN_WIDTH) {
@@ -118,8 +127,9 @@ main :: proc() {
       rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
       if rl.IsKeyDown(.R) {
         ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-        ball_vel = Vec2{-800,0}
-        player_pos = Vec2{player_pos.x, f32(SCREEN_HEIGHT) / 2}
+        ball_speed = 800
+        ball_vel = Vec2{-ball_speed,0}
+        player_pos = Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
         npc_pos = Vec2{npc_pos.x, f32(SCREEN_HEIGHT) / 2}
       }
     }
