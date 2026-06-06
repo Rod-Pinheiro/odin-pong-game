@@ -6,27 +6,55 @@ import "core:math/linalg"
 import "core:fmt"
 
 Vec2 :: rl.Vector2
+
+Paddle :: struct {
+  pos : Vec2,
+  vel : Vec2, 
+  size : Vec2,
+  speed : f32
+}
+
+Ball :: struct { 
+  pos : Vec2, 
+  vel : Vec2,
+  radius : f32,
+  speed : f32
+}
+
+Score :: struct {
+  player : int, 
+  npc : int
+}
+
 main :: proc() {
   SCREEN_WIDTH := i32(1280)
   SCREEN_HEIGHT := i32(720)
   rl.SetTargetFPS(60)
   rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pong")
-  player_vel : Vec2
-  player_size := Vec2{32,128}
-  player_pos := Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
-  player_speed := f32(800)
 
-  npc_size := Vec2{32,128}
-  npc_pos := Vec2{f32(SCREEN_WIDTH) - (npc_size.x + 10), f32(SCREEN_HEIGHT) / 2}
-  npc_vel : Vec2
-  npc_speed := f32(400)
+  player := Paddle { 
+    pos = { 10,  (f32(SCREEN_HEIGHT) - 128) / 2},
+    speed = 800,
+    size = {32,128}
+  }
 
-  ball_pos := Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-  ball_vel:= Vec2{0,0}
-  ball_size := 10
-  ball_speed := f32(800)
+  npc := Paddle { 
+    pos = {f32(SCREEN_WIDTH) - (32 + 10), f32(SCREEN_HEIGHT) / 2},
+    speed = 600,
+    size = {32,128}
+  }
 
-  score : Vec2
+  ball := Ball { 
+    pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2},
+    radius = 10,
+    speed = 800
+  }
+
+
+  score := Score {
+    player = 0,
+    npc = 0
+  }
 
   for !rl.WindowShouldClose() {
 
@@ -34,137 +62,138 @@ main :: proc() {
     rl.ClearBackground(rl.BLACK)
  
     if rl.IsKeyDown(.UP) {
-      player_vel.y = -player_speed
+      player.vel.y = -player.speed
     } else if rl.IsKeyDown(.DOWN){
-      player_vel.y = player_speed
+      player.vel.y = player.speed
     } else {
-      player_vel.y = 0
+      player.vel.y = 0
     }
 
     // Menu Start
-    if ball_vel == 0 {
+    if ball.vel == 0 {
       rl.DrawText("Press S to Start", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
       if rl.IsKeyDown(.S){
-        ball_vel = {-ball_speed, 0}
+        ball.vel = {-ball.speed, 0}
       }
     }
 
     // Position controllers
-    player_pos += player_vel * rl.GetFrameTime()
-    ball_pos += ball_vel * rl.GetFrameTime()
-    npc_pos += npc_vel * rl.GetFrameTime()
+    player.pos += player.vel * rl.GetFrameTime()
+    ball.pos += ball.vel * rl.GetFrameTime()
+    npc.pos += npc.vel * rl.GetFrameTime()
 
     // Arena
-    if player_pos.y > f32(rl.GetScreenHeight()) - 128 {
-    player_pos.y = f32(rl.GetScreenHeight()) - 128
+    if player.pos.y > f32(rl.GetScreenHeight()) - 128 {
+    player.pos.y = f32(rl.GetScreenHeight()) - 128
     }
-    if player_pos.y < 0 {
-    player_pos.y = f32(0)
-    }
-
-    if npc_pos.y > f32(rl.GetScreenHeight()) - 128 {
-    npc_pos.y = f32(rl.GetScreenHeight()) - 128
-    }
-    if npc_pos.y < 0 {
-    npc_pos.y = f32(0)
+    if player.pos.y < 0 {
+    player.pos.y = f32(0)
     }
 
-    if ball_pos.y + f32(ball_size) >= f32(SCREEN_HEIGHT) {
-      ball_vel = {ball_vel.x, ball_vel.y * -1}
+    if npc.pos.y > f32(rl.GetScreenHeight()) - 128 {
+    npc.pos.y = f32(rl.GetScreenHeight()) - 128
+    }
+    if npc.pos.y < 0 {
+    npc.pos.y = f32(0)
+    }
+
+    if ball.pos.y + ball.radius >= f32(SCREEN_HEIGHT) {
+      ball.vel = {ball.vel.x, ball.vel.y * -1}
     } 
-    if ball_pos.y - f32(ball_size) <= 0 {
-      ball_vel = {ball_vel.x, ball_vel.y * -1}
+    if ball.pos.y - ball.radius <= 0 {
+      ball.vel = {ball.vel.x, ball.vel.y * -1}
     }
     // hitbox fundo DEBUG
-    // if ball_pos.x >= f32(SCREEN_WIDTH) {
-    //   ball_vel = {ball_vel.x * -1, ball_vel.y}
+    // if ball.pos.x >= f32(SCREEN_WIDTH) {
+    //   ball.vel = {ball.vel.x * -1, ball.vel.y}
     // }
 
 
     //NPC logic
-    if ball_vel != 0{
-      diff := ball_pos.y - (npc_pos.y + npc_size.y / 2)
+    if ball.vel != 0{
+      diff := ball.pos.y - (npc.pos.y + npc.size.y / 2)
     if abs(diff) > 5 { // deadzone para não tremer
-        npc_vel.y = clamp(diff * 10, -npc_speed, npc_speed) // proporcional + limitado
+        npc.vel.y = clamp(diff * 10, -npc.speed, npc.speed) // proporcional + limitado
     } else {
-      npc_vel.y = 0
+      npc.vel.y = 0
     }
     }
     
     //Hitboxes
     player_rect := rl.Rectangle {
-      player_pos.x, player_pos.y,
-      player_size.x, player_size.y
+      player.pos.x, player.pos.y,
+      player.size.x, player.size.y
     }
     npc_rect := rl.Rectangle {
-      npc_pos.x, npc_pos.y,
-      npc_size.x, npc_size.y
+      npc.pos.x, npc.pos.y,
+      npc.size.x, npc.size.y
     }
     
-    if rl.CheckCollisionCircleRec(ball_pos, f32(ball_size) , player_rect) {
-      rel_y := (ball_pos.y - (player_pos.y + player_size.y / 2)) / (player_size.y / 2)
+    if rl.CheckCollisionCircleRec(ball.pos, ball.radius , player_rect) {
+      rel_y := (ball.pos.y - (player.pos.y + player.size.y / 2)) / (player.size.y / 2)
       rel_y = clamp(rel_y, -1, 1)
       angle := rel_y * (linalg.PI / 4)
-      speed := linalg.length(ball_vel)
-      ball_speed += 50
-      if ball_size <= 5 {
-        ball_size -= 1
+      speed := linalg.length(ball.vel)
+      ball.speed += 50
+      if ball.radius <= 5 {
+        ball.radius -= 1
       }
-      ball_vel = Vec2{speed * math.cos(angle), speed * math.sin(angle)}
+      ball.vel = Vec2{speed * math.cos(angle), speed * math.sin(angle)}
     }
 
-    if rl.CheckCollisionCircleRec(ball_pos, f32(ball_size) , npc_rect) {
-      rel_y := (ball_pos.y - (player_pos.y + player_size.y / 2)) / (player_size.y / 2)
+    if rl.CheckCollisionCircleRec(ball.pos, ball.radius , npc_rect) {
+      rel_y := (ball.pos.y - (player.pos.y + player.size.y / 2)) / (player.size.y / 2)
       rel_y = clamp(rel_y, -1, 1)
       angle := rel_y * (linalg.PI / 4)
-      speed := linalg.length(ball_vel)
-      ball_speed += 50
-      if ball_size <= 5 {
-        ball_size -= 1
+      speed := linalg.length(ball.vel)
+      ball.speed += 50
+      if ball.radius <= 5 {
+        ball.radius -= 1
       }
-      ball_vel = Vec2{ball_speed * -math.cos(angle), ball_speed * math.sin(angle)}
+      ball.vel = Vec2{ball.speed * -math.cos(angle), ball.speed * math.sin(angle)}
     }
 
-    if ball_pos.x < 0 || ball_pos.x >= f32(SCREEN_WIDTH) {
+    if ball.pos.x < 0 || ball.pos.x >= f32(SCREEN_WIDTH) {
       finish_game := false
       
-      if ball_pos.x > 0 {
-        score.x += 1
+      if ball.pos.x > 0 {
+        score.player += 1
       } else {
-        score.y += 1
+        score.npc += 1
       }
       
-      if score.x >= 11 || score.y >= 11 {
+      if score.player >= 11 || score.npc >= 11 {
         finish_game = true
         rl.DrawText("Game Over", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20, 40, rl.RED)
         rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
       }
       
       if finish_game == true && rl.IsKeyDown(.R) {
-        score = Vec2 {0,0}
-        ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-        ball_speed = 800
-        ball_vel = Vec2{-ball_speed,0}
-        player_pos = Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
-        npc_pos = Vec2{npc_pos.x, f32(SCREEN_HEIGHT) / 2}
+        score.player = 0
+        score.npc = 0
+        ball.pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
+        ball.speed = 800
+        ball.vel = {-ball.speed,0}
+        player.pos = { 10,  (f32(SCREEN_HEIGHT) - player.size.y) / 2}
+        npc.pos = Vec2{npc.pos.x, f32(SCREEN_HEIGHT) / 2}
       } 
       if finish_game == false {
-        ball_pos = Vec2{f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-        ball_speed = 800
-        ball_vel = Vec2{-ball_speed,0}
-        player_pos = Vec2{ 10,  (f32(SCREEN_HEIGHT) - player_size.y) / 2}
-        npc_pos = Vec2{npc_pos.x, f32(SCREEN_HEIGHT) / 2}
+        ball.pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
+        ball.speed = 800
+        ball.vel = {-ball.speed,0}
+        player.pos = { 10,  (f32(SCREEN_HEIGHT) - player.size.y) / 2}
+        npc.pos = {npc.pos.x, f32(SCREEN_HEIGHT) / 2}
       }
     }
 
-    score_text := fmt.ctprintf("%d : %d", clamp(i32(score.x), 0 ,11), clamp(i32(score.y), 0 ,11)) // limita os pontos exibidos na tela a 11
+    score_text := fmt.ctprintf("%d : %d", clamp(score.player, 0 ,11), clamp(score.npc, 0 ,11)) // limita os pontos exibidos na tela a 11
     rl.DrawText("SCORE", SCREEN_WIDTH / 2 - 50 , 20, 30, rl.WHITE)
     rl.DrawText(score_text, SCREEN_WIDTH / 2 - 30, 60, 30, rl.WHITE)
 
     rl.DrawFPS(10, 10);  
-    rl.DrawRectangleV(player_pos, player_size, rl.WHITE)
-    rl.DrawRectangleV(npc_pos, npc_size, rl.WHITE)
-    rl.DrawCircleV(ball_pos, f32(ball_size), rl.WHITE)
+    rl.DrawRectangleV(player.pos, player.size, rl.WHITE)
+    rl.DrawRectangleV(npc.pos, npc.size, rl.WHITE)
+    rl.DrawCircleV(ball.pos, f32(ball.radius), rl.WHITE)
     rl.EndDrawing()
   }
 
