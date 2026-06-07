@@ -23,7 +23,13 @@ Ball :: struct {
 
 Score :: struct {
   player : int, 
-  npc : int
+  npc : int,
+  limit : int
+}
+
+Resolution :: struct {
+  width : i32,
+  height : i32
 }
 
 main :: proc() {
@@ -53,7 +59,8 @@ main :: proc() {
 
   score := Score {
     player = 0,
-    npc = 0
+    npc = 0,
+    limit = 11
   }
 
   for !rl.WindowShouldClose() {
@@ -100,22 +107,12 @@ main :: proc() {
     check_collision(&player, &ball, 1)
     check_collision(&npc, &ball, -1)
 
-    if ball.pos.x < 0 || ball.pos.x >= f32(SCREEN_WIDTH) {
-      finish_game := false
-
-      if ball.pos.x > 0 {
-        score.player += 1
-      } else {
-        score.npc += 1
-      }
-      
-      if score.player >= 11 || score.npc >= 11 {
-        finish_game = true
-        rl.DrawText("Game Over", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 20, 40, rl.RED)
-        rl.DrawText("Press R to Restart", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
-      }
+    if ball.pos.x < 0 || ball.pos.x >= f32(resolution.width) {
+      update_score(&score, ball, resolution)
+      finish_game := is_game_over(score, resolution)
       
       if finish_game == true && rl.IsKeyDown(.R) {
+        reset_round(&ball,&score,&player, &npc, resolution)
         score.player = 0
         score.npc = 0
         ball.pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
@@ -125,11 +122,7 @@ main :: proc() {
         npc.pos = Vec2{npc.pos.x, f32(SCREEN_HEIGHT) / 2}
       } 
       if finish_game == false {
-        ball.pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-        ball.speed = 800
-        ball.vel = {-ball.speed,0}
-        player.pos = { 10,  (f32(SCREEN_HEIGHT) - player.size.y) / 2}
-        npc.pos = {npc.pos.x, f32(SCREEN_HEIGHT) / 2}
+        reset_round(&ball,&score,&player, &npc, resolution)
       }
     }
 
@@ -171,4 +164,29 @@ check_collision :: proc(p: ^Paddle, b: ^Ball, dir: f32) {
     }
     b.vel = {dir * speed * math.cos(angle), speed * math.sin(angle)}
   }
+}
+
+update_score :: proc (sc: ^Score, b: Ball, res: Resolution) { 
+  if b.pos.x < 0 { sc.npc += 1}
+  if b.pos.x > f32(res.width) { sc.player += 1}
+}
+
+
+is_game_over :: proc (sc: Score, res: Resolution) -> Maybe(bool) {
+  if sc.player >= sc.limit || sc.npc >= sc.limit {
+    rl.DrawText("Game Over", res.width / 2 - 100, res.height / 2 - 20, 40, rl.RED)
+    rl.DrawText("Press R to Restart", res.width / 2 -100 , res.height / 2 + 40, 20, rl.WHITE)
+    return true
+  }
+  return false
+}
+
+reset_round :: proc(b: ^Ball, sc: ^Score, player: ^Paddle, npc: ^Paddle, res : Resolution) {
+  // sc.player = 0
+  // sc.npc = 0
+  b.pos = {f32(res.width) / 2, f32(res.height) / 2}
+  b.speed = 800
+  b.vel = {-b.speed,0}
+  player.pos = { 10,  (f32(res.height) - player.size.y) / 2}
+  npc.pos = Vec2{npc.pos.x, f32(res.height) / 2}
 }
