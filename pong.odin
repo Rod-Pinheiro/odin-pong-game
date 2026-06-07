@@ -33,25 +33,29 @@ Resolution :: struct {
 }
 
 main :: proc() {
-  SCREEN_WIDTH := i32(1280)
-  SCREEN_HEIGHT := i32(720)
+  resolution := Resolution {
+    width = 1280,
+    height = 720
+  }
   rl.SetTargetFPS(60)
-  rl.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pong")
+  rl.InitWindow(1280, 720, "Pong")
+  handle_resolution(&resolution)
+
 
   player := Paddle { 
-    pos = { 10,  (f32(SCREEN_HEIGHT) - 128) / 2},
+    pos = { 10,  (f32(resolution.height) - 128) / 2},
     speed = 800,
-    size = {32,128}
+    size = {32, f32(resolution.height) * 0.2}
   }
 
   npc := Paddle { 
-    pos = {f32(SCREEN_WIDTH) - (32 + 10), f32(SCREEN_HEIGHT) / 2},
+    pos = {f32(resolution.width) - (32 + 10), (f32(resolution.height) - 128) / 2},
     speed = 600,
-    size = {32,128}
+    size = {32, f32(resolution.height) * 0.2}
   }
 
   ball := Ball { 
-    pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2},
+    pos = {f32(resolution.width) / 2, f32(resolution.height) / 2},
     radius = 10,
     speed = 800
   }
@@ -78,16 +82,17 @@ main :: proc() {
 
     // Menu Start
     if ball.vel == 0 {
-      rl.DrawText("Press S to Start", SCREEN_WIDTH / 2 -100 , SCREEN_HEIGHT / 2 + 40, 20, rl.WHITE)
+      rl.DrawText("Press S to Start", resolution.width / 2 -100 , resolution.height / 2 + 40, 20, rl.WHITE)
       if rl.IsKeyDown(.S){
         ball.vel = {-ball.speed, 0}
       }
     }
 
     // Position controllers
-    player.pos += player.vel * rl.GetFrameTime()
-    ball.pos += ball.vel * rl.GetFrameTime()
-    npc.pos += npc.vel * rl.GetFrameTime()
+    dt := rl.GetFrameTime()
+    player.pos += player.vel * dt
+    ball.pos += ball.vel * dt
+    npc.pos += npc.vel * dt
 
     // Arena
     clamp_paddle(&player)
@@ -115,20 +120,15 @@ main :: proc() {
         reset_round(&ball,&score,&player, &npc, resolution)
         score.player = 0
         score.npc = 0
-        ball.pos = {f32(SCREEN_WIDTH) / 2, f32(SCREEN_HEIGHT) / 2}
-        ball.speed = 800
-        ball.vel = {-ball.speed,0}
-        player.pos = { 10,  (f32(SCREEN_HEIGHT) - player.size.y) / 2}
-        npc.pos = Vec2{npc.pos.x, f32(SCREEN_HEIGHT) / 2}
       } 
       if finish_game == false {
         reset_round(&ball,&score,&player, &npc, resolution)
       }
     }
 
-    score_text := fmt.ctprintf("%d : %d", clamp(score.player, 0 ,11), clamp(score.npc, 0 ,11)) // limita os pontos exibidos na tela a 11
-    rl.DrawText("SCORE", SCREEN_WIDTH / 2 - 50 , 20, 30, rl.WHITE)
-    rl.DrawText(score_text, SCREEN_WIDTH / 2 - 30, 60, 30, rl.WHITE)
+    score_text := fmt.ctprintf("%d : %d", clamp(score.player, 0 ,score.limit), clamp(score.npc, 0 ,score.limit)) // limita os pontos exibidos na tela a score.limit
+    rl.DrawText("SCORE", resolution.width / 2 - 50 , 20, 30, rl.WHITE)
+    rl.DrawText(score_text, resolution.width / 2 - 30, 60, 30, rl.WHITE)
 
     rl.DrawFPS(10, 10);  
     rl.DrawRectangleV(player.pos, player.size, rl.WHITE)
@@ -140,6 +140,16 @@ main :: proc() {
   rl.CloseWindow()
 }
 
+handle_resolution :: proc(res: ^Resolution) {
+  monitor:= rl.GetCurrentMonitor()
+  res^ = {
+    width = rl.GetMonitorWidth(monitor),
+    height = rl.GetMonitorHeight(monitor),
+  }
+  rl.SetWindowSize(res.width, res.height)
+  rl.ToggleFullscreen()
+}
+
 clamp_paddle :: proc(p: ^Paddle) {
   max_y := f32(rl.GetScreenHeight()) - p.size.y
   if p.pos.y > max_y {p.pos.y = max_y}
@@ -148,8 +158,14 @@ clamp_paddle :: proc(p: ^Paddle) {
 
 clamp_ball :: proc(b: ^Ball) {
   max_y := f32(rl.GetScreenHeight()) - b.radius
-  if b.pos.y > max_y {b.vel = {b.vel.x, b.vel.y * -1 }}
-  if b.pos.y < 0 {b.vel = {b.vel.x, b.vel.y * -1}}
+  if b.pos.y > max_y {
+    b.pos = {b.pos.x, max_y}
+    b.vel = {b.vel.x, b.vel.y * -1 }
+  }
+  if b.pos.y < b.radius {
+    b.pos = {b.pos.x, b.radius}
+    b.vel = {b.vel.x, b.vel.y * -1}
+  }
 }
 
 check_collision :: proc(p: ^Paddle, b: ^Ball, dir: f32) {
