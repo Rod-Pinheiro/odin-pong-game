@@ -14,10 +14,15 @@ is_game_over :: proc(sc: Score) -> bool {
 	return false
 }
 
-reset_round :: proc(b: ^Ball, sc: ^Score, player: ^Paddle, npc: ^Paddle, res: Resolution) {
+reset_round :: proc(b: ^Ball, player: ^Paddle, npc: ^Paddle, res: Resolution) {
 	b.pos = {f32(res.width) / 2, f32(res.height) / 2}
 	b.speed = 800
 	b.vel = {-b.speed, 0}
 	player.pos = {10, (f32(res.height) - player.size.y) / 2}
 	npc.pos = Vec2{npc.pos.x, f32(res.height) / 2}
+}
+
+reset_score :: proc(sc: ^Score) {
+	sc.player = 0
+	sc.npc = 0
 }

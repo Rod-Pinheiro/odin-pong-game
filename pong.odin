@@ -64,14 +64,6 @@ main :: proc() {
 
 		//NPC logic
 		npc_move(&npc, ball)
-		// if ball.vel != 0 {
-		// 	// diff := ball.pos.y - (npc.pos.y + npc.size.y / 2)
-		// 	// if abs(diff) > 5 { 	// deadzone para não tremer
-		// 	// 	npc.vel.y = clamp(diff * 10, -npc.speed, npc.speed) // proporcional + limitado
-		// 	// } else {
-		// 	// 	npc.vel.y = 0
-		// 	// }
-		// }
 
 		check_collision(&player, &ball, 1)
 		check_collision(&npc, &ball, -1)
@@ -80,14 +72,15 @@ main :: proc() {
 			update_score(&score, ball, resolution)
 			finish_game := is_game_over(score)
 
-			if finish_game == true && rl.IsKeyDown(.R) {
+			if finish_game == true {
 				draw_game_over(resolution)
-				reset_round(&ball, &score, &player, &npc, resolution)
-				score.player = 0
-				score.npc = 0
+				if rl.IsKeyDown(.R) {
+					reset_round(&ball, &player, &npc, resolution)
+					reset_score(&score)
+				}
 			}
 			if finish_game == false {
-				reset_round(&ball, &score, &player, &npc, resolution)
+				reset_round(&ball, &player, &npc, resolution)
 			}
 		}
 		draw_score(score)
