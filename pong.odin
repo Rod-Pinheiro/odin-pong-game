@@ -23,6 +23,7 @@ main :: proc() {
 		pos    = {f32(resolution.width) / 2, f32(resolution.height) / 2},
 		radius = 10,
 		speed  = 800,
+		active = false,
 	}
 
 
@@ -31,7 +32,9 @@ main :: proc() {
 		npc    = 0,
 		limit  = 11,
 	}
-
+	sfx := init_audio()
+	sound_events: [dynamic]SoundEvent
+	defer delete(sound_events)
 	for !rl.WindowShouldClose() {
 		begin_frame()
 
@@ -47,6 +50,7 @@ main :: proc() {
 		if ball.vel == 0 {
 			draw_menu()
 			if rl.IsKeyDown(.S) {
+				ball.active = true
 				ball.vel = {-ball.speed, 0}
 			}
 		}
@@ -65,24 +69,36 @@ main :: proc() {
 		//NPC logic
 		npc_move(&npc, ball)
 
-		check_collision(&player, &ball, 1)
-		check_collision(&npc, &ball, -1)
+		if check_collision(&player, &ball, 1) {
+			append(&sound_events, SoundEvent.Hit)
+		}
+		if check_collision(&npc, &ball, -1) {
+			append(&sound_events, SoundEvent.Hit)
+		}
 
-		if ball.pos.x < 0 || ball.pos.x >= f32(resolution.width) {
+		if ball.active && is_ball_out(ball, resolution) {
 			update_score(&score, ball, resolution)
 			finish_game := is_game_over(score)
-
-			if finish_game == true {
-				draw_game_over(resolution)
-				if rl.IsKeyDown(.R) {
-					reset_round(&ball, &player, &npc, resolution)
-					reset_score(&score)
-				}
+			append(&sound_events, SoundEvent.BallOut)
+			if finish_game == true & ball.active {
+				append(&sound_events, SoundEvent.GameOver)
+				ball.active = false
 			}
 			if finish_game == false {
 				reset_round(&ball, &player, &npc, resolution)
 			}
 		}
+		// GameOver
+		if !ball.active && ball.vel != 0 {
+			draw_game_over(resolution)
+			if rl.IsKeyDown(.R) {
+				reset_round(&ball, &player, &npc, resolution)
+				reset_score(&score)
+				ball.active = true
+			}
+		}
+		process_sound_events(sound_events[:], &sfx)
+		clear(&sound_events)
 		draw_score(score)
 		draw_fps()
 		draw_paddle(player)
@@ -90,5 +106,6 @@ main :: proc() {
 		draw_ball(ball)
 		end_frame()
 	}
+	close_audio(&sfx)
 	close_window()
 }

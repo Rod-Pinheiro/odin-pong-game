@@ -22,18 +22,17 @@ clamp_ball :: proc(b: ^Ball) {
 	}
 }
 
-check_collision :: proc(p: ^Paddle, b: ^Ball, dir: f32) {
+check_collision :: proc(p: ^Paddle, b: ^Ball, dir: f32) -> bool {
 	rect := rl.Rectangle{p.pos.x, p.pos.y, p.size.x, p.size.y}
 	if rl.CheckCollisionCircleRec(b.pos, b.radius, rect) {
 		rel_y := (b.pos.y - (p.pos.y + p.size.y / 2)) / (p.size.y / 2)
 		rel_y = clamp(rel_y, -1, 1)
 		angle := rel_y * (linalg.PI / 4)
 		speed := linalg.length(b.vel * 1.05) // aumenta velocidade da bola em 5% a cada hit
-		if b.radius <= 5 {
-			b.radius -= 1
-		}
 		b.vel = {dir * speed * math.cos(angle), speed * math.sin(angle)}
+		return true
 	}
+	return false
 }
 
 npc_move :: proc(p: ^Paddle, b: Ball) {

@@ -26,3 +26,10 @@ reset_score :: proc(sc: ^Score) {
 	sc.player = 0
 	sc.npc = 0
 }
+
+is_ball_out :: proc(b: Ball, res: Resolution) -> bool {
+	if b.pos.x < 0 || b.pos.x >= f32(res.width) {
+		return true
+	}
+	return false
+}

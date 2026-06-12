@@ -1,4 +1,5 @@
 package pong
+import rl "vendor:raylib"
 
 
 Paddle :: struct {
@@ -13,6 +14,7 @@ Ball :: struct {
 	vel:    Vec2,
 	radius: f32,
 	speed:  f32,
+	active: bool,
 }
 
 Score :: struct {
@@ -24,4 +26,14 @@ Score :: struct {
 Resolution :: struct {
 	width:  i32,
 	height: i32,
+}
+
+SoundEvent :: enum {
+	Hit,
+	BallOut,
+	GameOver,
+}
+
+SoundFx :: struct {
+	sounds: [SoundEvent]rl.Sound,
 }
