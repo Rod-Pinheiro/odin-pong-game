@@ -14,7 +14,6 @@ Ball :: struct {
 	vel:    Vec2,
 	radius: f32,
 	speed:  f32,
-	active: bool,
 }
 
 Score :: struct {
@@ -36,4 +35,10 @@ SoundEvent :: enum {
 
 SoundFx :: struct {
 	sounds: [SoundEvent]rl.Sound,
+}
+
+GameState :: enum {
+	Menu,
+	Playing,
+	GameOver,
 }

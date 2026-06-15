@@ -43,3 +43,21 @@ npc_move :: proc(p: ^Paddle, b: Ball) {
 		p.vel.y = 0
 	}
 }
+
+update_position :: proc(player, npc: ^Paddle, ball: ^Ball) {
+	dt := rl.GetFrameTime()
+	player.pos += player.vel * dt
+	ball.pos += ball.vel * dt
+	npc.pos += npc.vel * dt
+}
+
+handle_player_input :: proc(player: ^Paddle) {
+	if rl.IsKeyDown(.UP) {
+		player.vel.y = -player.speed
+	} else if rl.IsKeyDown(.DOWN) {
+		player.vel.y = player.speed
+	} else {
+		player.vel.y = 0
+	}
+
+}

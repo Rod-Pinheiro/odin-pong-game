@@ -23,7 +23,6 @@ main :: proc() {
 		pos    = {f32(resolution.width) / 2, f32(resolution.height) / 2},
 		radius = f32(10 * (resolution.width / 1280)),
 		speed  = f32(800 * (resolution.width / 1280)),
-		active = false,
 	}
 
 
@@ -32,69 +31,54 @@ main :: proc() {
 		npc    = 0,
 		limit  = 11,
 	}
+
+	state := GameState.Menu
+
 	sfx := init_audio()
 	sound_events: [dynamic]SoundEvent
 	defer delete(sound_events)
+
 	for !rl.WindowShouldClose() {
 		begin_frame()
 
-		if rl.IsKeyDown(.UP) {
-			player.vel.y = -player.speed
-		} else if rl.IsKeyDown(.DOWN) {
-			player.vel.y = player.speed
-		} else {
-			player.vel.y = 0
-		}
-
-		// Menu Start
-		if ball.vel == 0 {
+		switch state {
+		case .Menu:
 			draw_menu()
 			if rl.IsKeyDown(.S) {
-				ball.active = true
+				state = .Playing
 				ball.vel = {-ball.speed, 0}
 			}
-		}
-
-		// Position controllers
-		dt := rl.GetFrameTime()
-		player.pos += player.vel * dt
-		ball.pos += ball.vel * dt
-		npc.pos += npc.vel * dt
-
-		// Arena
-		clamp_paddle(&player)
-		clamp_paddle(&npc)
-		clamp_ball(&ball)
-
-		//NPC logic
-		npc_move(&npc, ball)
-
-		if check_collision(&player, &ball, 1) {
-			append(&sound_events, SoundEvent.Hit)
-		}
-		if check_collision(&npc, &ball, -1) {
-			append(&sound_events, SoundEvent.Hit)
-		}
-
-		if ball.active && is_ball_out(ball, resolution) {
-			update_score(&score, ball, resolution)
-			finish_game := is_game_over(score)
-			append(&sound_events, SoundEvent.BallOut)
-			if finish_game == true & ball.active {
-				append(&sound_events, SoundEvent.GameOver)
-				ball.active = false
+		case .Playing:
+			handle_player_input(&player)
+			npc_move(&npc, ball)
+			update_position(&player, &npc, &ball)
+			clamp_paddle(&player)
+			clamp_paddle(&npc)
+			clamp_ball(&ball)
+			if check_collision(&player, &ball, 1) {
+				append(&sound_events, SoundEvent.Hit)
 			}
-			if finish_game == false {
-				reset_round(&ball, &player, &npc, resolution)
+			if check_collision(&npc, &ball, -1) {
+				append(&sound_events, SoundEvent.Hit)
 			}
-		}
-		// GameOver
-		if !ball.active && ball.vel != 0 {
+			if is_ball_out(ball, resolution) {
+				update_score(&score, ball, resolution)
+				finish_game := is_game_over(score)
+				append(&sound_events, SoundEvent.BallOut)
+				if finish_game == true {
+					append(&sound_events, SoundEvent.GameOver)
+					state = .GameOver
+				}
+				if finish_game == false {
+					reset_round(&ball, &player, &npc, resolution)
+				}
+			}
+		case .GameOver:
 			draw_game_over(resolution)
 			if rl.IsKeyDown(.R) {
 				reset_round(&ball, &player, &npc, resolution)
 				reset_score(&score)
-				ball.active = true
+				state = .Playing
 			}
 		}
 		process_sound_events(sound_events[:], &sfx)
