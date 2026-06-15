@@ -9,20 +9,20 @@ main :: proc() {
 	resolution := init_window()
 	player := Paddle {
 		pos   = {10, (f32(resolution.height) - 128) / 2},
-		speed = 800,
+		speed = f32(800 * (resolution.height / 720)),
 		size  = {32, f32(resolution.height) * 0.2},
 	}
 
 	npc := Paddle {
 		pos   = {f32(resolution.width) - (32 + 10), (f32(resolution.height) - 128) / 2},
-		speed = 600,
+		speed = f32(600 * (resolution.height / 720)),
 		size  = {32, f32(resolution.height) * 0.2},
 	}
 
 	ball := Ball {
 		pos    = {f32(resolution.width) / 2, f32(resolution.height) / 2},
-		radius = 10,
-		speed  = 800,
+		radius = f32(10 * (resolution.width / 1280)),
+		speed  = f32(800 * (resolution.width / 1280)),
 		active = false,
 	}
 

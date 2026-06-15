@@ -46,8 +46,20 @@ draw_score :: proc(sc: Score) {
 		clamp(sc.player, 0, sc.limit),
 		clamp(sc.npc, 0, sc.limit),
 	) // limita os pontos exibidos na tela a score.limit
-	rl.DrawText("SCORE", rl.GetScreenWidth() / 2 - 50, 20, 30, rl.WHITE)
-	rl.DrawText(score_text, rl.GetScreenWidth() / 2 - 30, 60, 30, rl.WHITE)
+	rl.DrawText(
+		"SCORE",
+		rl.GetScreenWidth() / 2 - 50,
+		20,
+		30 * (rl.GetScreenWidth() / 1280),
+		rl.WHITE,
+	)
+	rl.DrawText(
+		score_text,
+		rl.GetScreenWidth() / 2 - 30,
+		60,
+		30 * (rl.GetScreenWidth() / 1280),
+		rl.WHITE,
+	)
 }
 
 draw_menu :: proc() {
@@ -61,8 +73,20 @@ draw_menu :: proc() {
 }
 
 draw_game_over :: proc(res: Resolution) {
-	rl.DrawText("Game Over", res.width / 2 - 100, res.height / 2 - 20, 40, rl.RED)
-	rl.DrawText("Press R to Restart", res.width / 2 - 100, res.height / 2 + 40, 20, rl.WHITE)
+	rl.DrawText(
+		"Game Over",
+		res.width / 2 - 100,
+		res.height / 2 - 20,
+		40 * (res.width / 1280),
+		rl.RED,
+	)
+	rl.DrawText(
+		"Press R to Restart",
+		res.width / 2 - 100,
+		res.height / 2 + 40,
+		20 * (res.width / 1280),
+		rl.WHITE,
+	)
 }
 
 draw_fps :: proc() {
